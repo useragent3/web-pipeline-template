@@ -31,6 +31,16 @@ pnpm assets:optimize
 Optimised files land in `public/assets/optimized/` with a content-hash manifest.
 `assets/incoming/` is gitignored — never committed to the repo.
 
+## Vercel deployment
+
+The repo is ready to deploy. **One-time setup (human action required):**
+
+1. Visit [vercel.com/new](https://vercel.com/new) and import `useragent3/web-pipeline-template`
+2. Leave settings as-is — Next.js is auto-detected
+3. Click **Deploy**
+
+Once linked, every push to `main` auto-deploys and every PR gets a preview URL.
+
 ## Cloning for a client
 
 See `docs/cloning-for-a-client.md` (Phase 2 deliverable).
