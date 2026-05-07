@@ -36,6 +36,10 @@ yarn-error.log*
 # vercel
 .vercel
 
+# asset pipeline — raw incoming assets never committed
+/assets/incoming/
+/public/assets/optimized/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
