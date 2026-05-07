@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import { useGSAP } from '@gsap/react'
 import gsap from 'gsap'
 import ScrollTrigger from 'gsap/ScrollTrigger'
@@ -11,18 +11,18 @@ gsap.registerPlugin(ScrollTrigger)
 
 export function Hero() {
   const containerRef = useRef<HTMLDivElement>(null)
-  const stickyRef = useRef<HTMLDivElement>(null)
   const headlineRef = useRef<HTMLDivElement>(null)
-  const anchor1Ref = useRef<HTMLDivElement>(null)
-  const anchor2Ref = useRef<HTMLDivElement>(null)
   const progressRef = useRef(0)
+
+  const [anchor1Visible, setAnchor1Visible] = useState(false)
+  const [anchor2Visible, setAnchor2Visible] = useState(false)
 
   useGSAP(
     () => {
       const container = containerRef.current
       if (!container) return
 
-      // Sync scroll progress into the Three.js scene
+      // Sync raw scroll progress for the 3D camera
       ScrollTrigger.create({
         trigger: container,
         start: 'top top',
@@ -32,7 +32,7 @@ export function Hero() {
         },
       })
 
-      // Main scroll-driven timeline
+      // Headline scroll-scrub fade (Act 0 → exits at 20%)
       const tl = gsap.timeline({
         defaults: { ease: 'none' },
         scrollTrigger: {
@@ -42,60 +42,79 @@ export function Hero() {
           scrub: 1,
         },
       })
+      tl.to(headlineRef.current, { opacity: 0, y: -30, duration: 0.2 }, 0.05)
 
-      // Initial headline: visible until 15% scroll
-      tl.to(headlineRef.current, { opacity: 0, y: -30, duration: 0.15 }, 0.1)
-
-      // Anchor 1: fade in at 25%, out at 52%
-      tl.from(anchor1Ref.current, { opacity: 0, y: 24, duration: 0.12 }, 0.25)
-        .to(anchor1Ref.current, { opacity: 0, y: -24, duration: 0.12 }, 0.52)
-
-      // Anchor 2: fade in at 62%, out at 88%
-      tl.from(anchor2Ref.current, { opacity: 0, y: 24, duration: 0.12 }, 0.62)
-        .to(anchor2Ref.current, { opacity: 0, y: -24, duration: 0.12 }, 0.86)
+      // Anchor 1 visibility: 35–52% scroll progress (spec §6)
+      ScrollTrigger.create({
+        trigger: container,
+        start: 'top top',
+        end: 'bottom bottom',
+        onUpdate: (self) => {
+          const p = self.progress
+          setAnchor1Visible(p >= 0.35 && p <= 0.52)
+          setAnchor2Visible(p >= 0.65 && p <= 0.82)
+        },
+      })
     },
     { scope: containerRef }
   )
 
   return (
-    // 300vh gives enough scroll space for the camera journey
+    // 200vh total scroll range (spec §5)
     <section
       ref={containerRef}
       className="relative"
-      style={{ height: '300vh' }}
+      style={{ height: '200vh' }}
+      id="hero-section"
       aria-label="Hero"
     >
-      <div
-        ref={stickyRef}
-        className="sticky top-0 h-screen overflow-hidden bg-[#050508]"
-      >
+      <div className="sticky top-0 h-screen overflow-hidden hero-sticky">
         {/* 3D Canvas */}
         <HeroScene progressRef={progressRef} />
 
-        {/* Screen-reader accessible label for the 3D scene */}
+        {/* Screen-reader label for the 3D scene */}
         <span className="sr-only">
           Animated 3D geometric shape illustrating the web pipeline
         </span>
 
-        {/* Initial centre headline */}
+        {/* Act 0 — Hero headline (always visible on load, fades out at 20% scroll) */}
         <div
           ref={headlineRef}
           className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center px-6 text-center"
         >
-          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.25em] text-[var(--hero-accent)]">
+          <p
+            className="mb-3 text-xs font-semibold uppercase"
+            style={{
+              color: 'var(--color-brand-primary)',
+              letterSpacing: 'var(--tracking-wide)',
+            }}
+          >
             Web Pipeline Template
           </p>
-          <h1 className="text-5xl font-bold leading-tight text-white md:text-7xl">
+          <h1
+            className="font-bold"
+            style={{
+              fontSize: 'var(--text-hero)',
+              lineHeight: 'var(--leading-tight)',
+              letterSpacing: 'var(--tracking-tight)',
+              color: 'var(--color-text-primary)',
+            }}
+          >
             Build.
             <br />
             Ship.
             <br />
             Repeat.
           </h1>
-          <p className="mt-6 max-w-md text-base text-white/50 md:text-lg">
+          <p
+            className="mt-6 max-w-md"
+            style={{
+              color: 'var(--color-text-secondary)',
+              fontSize: 'var(--text-body-lg)',
+            }}
+          >
             Scroll to explore
           </p>
-          {/* Accessible scroll cue arrow */}
           <svg
             className="mt-8 animate-bounce"
             width="24"
@@ -114,8 +133,11 @@ export function Hero() {
           </svg>
         </div>
 
-        {/* Copy anchors */}
-        <CopyAnchors anchor1Ref={anchor1Ref} anchor2Ref={anchor2Ref} />
+        {/* Copy anchors — controlled by scroll progress state */}
+        <CopyAnchors
+          anchor1Visible={anchor1Visible}
+          anchor2Visible={anchor2Visible}
+        />
       </div>
     </section>
   )
