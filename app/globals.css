@@ -4,7 +4,7 @@
 
 :root {
   /* Brand colors (HSL channels — use with hsl() wrapper) */
-  --color-brand-primary-hsl:  220 70% 55%;
+  --color-brand-primary-hsl:  220 75% 70%;  /* 70% lightness → ≈8:1 contrast on dark bg */
   --color-brand-accent-hsl:   170 60% 45%;
   --color-brand-warm-hsl:      30 90% 60%;
 
